@@ -65,6 +65,26 @@ module Faraday
 
     end
 
+    # Private: to construct an exception matcher object.
+    #
+    # An exception matcher for the rescue clause can usually be any object that
+    # responds to `===`, but for Ruby 1.8 it has to be a Class or Module.
+    class ExceptionMatcher < Module
+      def initialize(exceptions)
+        @exceptions = exceptions
+      end
+
+      def ===(error)
+        @exceptions.any? do |ex|
+          if ex.is_a? Module
+            error.is_a? ex
+          else
+            error.class.to_s == ex.to_s
+          end
+        end
+      end
+    end
+
     # Public: Initialize middleware
     #
     # Options:
@@ -92,7 +112,7 @@ module Faraday
     def initialize(app, options = nil)
       super(app)
       @options = Options.from(options)
-      @errmatch = build_exception_matcher(@options.exceptions)
+      @errmatch = ExceptionMatcher.new @options.exceptions
     end
 
     def sleep_amount(retries)
@@ -116,26 +136,6 @@ module Faraday
         end
         raise
       end
-    end
-
-    # Private: construct an exception matcher object.
-    #
-    # An exception matcher for the rescue clause can usually be any object that
-    # responds to `===`, but for Ruby 1.8 it has to be a Class or Module.
-    def build_exception_matcher(exceptions)
-      matcher = Module.new
-      (class << matcher; self; end).instance_eval do
-        define_method(:===) do |error|
-          exceptions.any? do |ex|
-            if ex.is_a? Module
-              error.is_a? ex
-            else
-              error.class.to_s == ex.to_s
-            end
-          end
-        end
-      end
-      matcher
     end
 
     private
