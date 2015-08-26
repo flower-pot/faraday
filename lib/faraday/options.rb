@@ -151,9 +151,9 @@ module Faraday
 
     def self.memoized(key)
       memoized_attributes[key.to_sym] = Proc.new
-      class_eval <<-RUBY, __FILE__, __LINE__ + 1
-        def #{key}() self[:#{key}]; end
-      RUBY
+      define_method(key) do
+        self[key.to_sym]
+      end
     end
 
     def self.memoized_attributes

@@ -135,14 +135,12 @@ module Faraday
     #
     # verb - An HTTP verb: get, head, or delete.
     %w[get head delete].each do |method|
-      class_eval <<-RUBY, __FILE__, __LINE__ + 1
-        def #{method}(url = nil, params = nil, headers = nil)
-          run_request(:#{method}, url, nil, headers) { |request|
-            request.params.update(params) if params
-            yield(request) if block_given?
-          }
+      define_method(method) do |url = nil, params = nil, headers = nil, &block|
+        run_request(method.to_sym, url, nil, headers) do |request|
+          request.params.update(params) if params
+          block.call(request) if !block.nil?
         end
-      RUBY
+      end
     end
 
     # Public: Makes an HTTP request with a body.
@@ -172,11 +170,9 @@ module Faraday
     #
     # verb - An HTTP verb: post, put, or patch.
     %w[post put patch].each do |method|
-      class_eval <<-RUBY, __FILE__, __LINE__ + 1
-        def #{method}(url = nil, body = nil, headers = nil, &block)
-          run_request(:#{method}, url, body, headers, &block)
-        end
-      RUBY
+      define_method(method) do |url = nil, body = nil, headers = nil, &block|
+        run_request(method.to_sym, url, body, headers, &block)
+      end
     end
 
     # Public: Sets up the Authorization header with these credentials, encoded

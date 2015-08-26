@@ -136,6 +136,17 @@ module Faraday
         end
       end
       matcher
+      Module.new do
+        def ===(error)
+          exceptions.any? do |ex|
+            if ex.is_a? Module
+              error.is_a? ex
+            else
+              error.class.to_s == ex.to_s
+            end
+          end
+        end
+      end
     end
 
     private
