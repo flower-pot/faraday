@@ -124,7 +124,7 @@ module Faraday
     # responds to `===`, but for Ruby 1.8 it has to be a Class or Module.
     def build_exception_matcher(exceptions)
       matcher = Module.new
-      (class << matcher; self; end).class_eval do
+      (class << matcher; self; end).instance_eval do
         define_method(:===) do |error|
           exceptions.any? do |ex|
             if ex.is_a? Module
@@ -136,17 +136,6 @@ module Faraday
         end
       end
       matcher
-      Module.new do
-        def ===(error)
-          exceptions.any? do |ex|
-            if ex.is_a? Module
-              error.is_a? ex
-            else
-              error.class.to_s == ex.to_s
-            end
-          end
-        end
-      end
     end
 
     private
